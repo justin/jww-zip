@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  LC_CTYPE: en_US.UTF-8
+  LANG: en_US.UTF-8
+
+jobs:
+  framework:
+    name: Framework Build & Test
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Install CocoaPods
+        run: gem install cocoapods
+
+      - name: Build and Test Framework
+        run: ./build.sh framework
+
+  spm:
+    name: Swift Package Manager Build & Test
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build and Test with SPM
+        run: ./build.sh spm
+
+  examples:
+    name: Examples Build
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Build Examples
+        run: ./build.sh examples
