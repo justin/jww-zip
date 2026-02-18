@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # **** Update me when new Xcode versions are released! ****
-PLATFORM="platform=iOS Simulator,OS=14.0,name=iPhone 11"
+PLATFORM="platform=iOS Simulator,OS=26.2,name=iPhone 17 Pro"
 SDK="iphonesimulator"
 
 # It is pitch black.
