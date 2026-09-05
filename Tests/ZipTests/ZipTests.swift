@@ -2,6 +2,12 @@ import Foundation
 import Testing
 @testable import Zip
 
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
+
 /// Tests to validate zipping and unzipping behavior.
 ///
 /// The suite is serialized because the custom file extension tests mutate the
@@ -174,11 +180,12 @@ final class ZipTests {
         removeAtTeardown(unzipDestination)
         let permission644 = unzipDestination.appendingPathComponent("unsupported_permission").appendingPathExtension("txt")
         let foundPermissions = try FileManager.default.attributesOfItem(atPath: permission644.path)[.posixPermissions] as? Int
-        #if os(Linux)
-        let expectedPermissions = 0o664
-        #else
-        let expectedPermissions = 0o644
-        #endif
+        // The archive stores permissions outside the range Zip applies, so the
+        // extracted file keeps the mode fopen assigns: 0o666 masked by the
+        // current process umask (e.g. 0o644 with the common 022 umask).
+        let currentUmask = umask(0)
+        umask(currentUmask)
+        let expectedPermissions = 0o666 & ~Int(currentUmask)
         #expect(foundPermissions != nil)
         #expect(foundPermissions == expectedPermissions,
                 "\(foundPermissions.map { String($0, radix: 8) } ?? "nil") is not equal to \(String(expectedPermissions, radix: 8))")
