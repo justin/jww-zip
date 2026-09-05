@@ -1,14 +1,15 @@
-// swift-tools-version:5.5
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 import PackageDescription
 
 let package = Package(
     name: "Zip",
     platforms: [
-        .iOS(.v15),
-        .macCatalyst(.v15),
-        .macOS(.v11),
-        .tvOS(.v15),
+        .iOS(.v18),
+        .macOS(.v15),
+        .tvOS(.v18),
+        .watchOS(.v11),
+        .visionOS(.v1),
     ],
     products: [
         .library(name: "Zip", targets: ["Zip"])
@@ -16,20 +17,18 @@ let package = Package(
     targets: [
         .target(
             name: "Minizip",
-            dependencies: [],
-            path: "Zip/minizip",
-            exclude: ["module"],
             linkerSettings: [
                 .linkedLibrary("z")
             ]),
         .target(
             name: "Zip",
-            dependencies: ["Minizip"],
-            path: "Zip",
-            exclude: ["minizip", "zlib"]),
+            dependencies: ["Minizip"]),
         .testTarget(
             name: "ZipTests",
             dependencies: ["Zip"],
-            path: "ZipTests"),
+            resources: [.process("Resources")]),
+    ],
+    swiftLanguageModes: [
+        .v5
     ]
 )

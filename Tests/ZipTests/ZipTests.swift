@@ -32,13 +32,7 @@ class ZipTests: XCTestCase {
     }
 
     private func url(forResource resource: String, withExtension ext: String? = nil) -> URL? {
-        #if Xcode
-        return Bundle(for: ZipTests.self).url(forResource: resource, withExtension: ext)
-        #else
-        let testDirPath = URL(fileURLWithPath: String(#file)).deletingLastPathComponent()
-        let resourcePath = testDirPath.appendingPathComponent("Resources").appendingPathComponent(resource)
-        return ext.map { resourcePath.appendingPathExtension($0) } ?? resourcePath
-        #endif
+        return Bundle.module.url(forResource: resource, withExtension: ext)
     }
 
     private func temporaryDirectory() -> URL {
