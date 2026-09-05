@@ -9,7 +9,7 @@ let package = Package(
         .macOS(.v15),
         .tvOS(.v18),
         .watchOS(.v11),
-        .visionOS(.v1),
+        .visionOS(.v2),
     ],
     products: [
         .library(name: "Zip", targets: ["Zip"])
@@ -29,6 +29,7 @@ let package = Package(
             resources: [.process("Resources")]),
     ],
     swiftLanguageModes: [
-        .v5
+        .v5,
+        .v6
     ]
 )

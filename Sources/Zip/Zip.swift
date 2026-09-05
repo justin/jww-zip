@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Synchronization
 internal import Minizip
 
 /// Zip error type
@@ -65,10 +66,8 @@ public struct ArchiveFile {
 /// Zip class
 public class Zip {
     
-    /**
-     Set of vaild file extensions
-     */
-    internal static var customFileExtensions: Set<String> = []
+    /// Thread-safe storage for the set of valid custom file extensions.
+    private static let customFileExtensions = Mutex<Set<String>>([])
     
     // MARK: Lifecycle
     
@@ -512,7 +511,9 @@ public class Zip {
      - parameter fileExtension: A file extension.
      */
     public class func addCustomFileExtension(_ fileExtension: String) {
-        customFileExtensions.insert(fileExtension)
+        customFileExtensions.withLock {
+            _ = $0.insert(fileExtension)
+        }
     }
     
     /**
@@ -521,7 +522,9 @@ public class Zip {
      - parameter fileExtension: A file extension.
      */
     public class func removeCustomFileExtension(_ fileExtension: String) {
-        customFileExtensions.remove(fileExtension)
+        customFileExtensions.withLock {
+            _ = $0.remove(fileExtension)
+        }
     }
     
     /**
@@ -533,8 +536,10 @@ public class Zip {
      */
     public class func isValidFileExtension(_ fileExtension: String) -> Bool {
         
-        let validFileExtensions: Set<String> = customFileExtensions.union(["zip", "cbz"])
-        
+        let validFileExtensions: Set<String> = customFileExtensions.withLock {
+            $0.union(["zip", "cbz"])
+        }
+
         return validFileExtensions.contains(fileExtension)
     }
     
