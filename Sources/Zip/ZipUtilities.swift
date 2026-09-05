@@ -1,11 +1,3 @@
-//
-//  ZipUtilities.swift
-//  Zip
-//
-//  Created by Roy Marmelstein on 26/01/2016.
-//  Copyright © 2016 Roy Marmelstein. All rights reserved.
-//
-
 import Foundation
 
 internal class ZipUtilities {

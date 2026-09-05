@@ -1,11 +1,3 @@
-//
-//  QuickZip.swift
-//  Zip
-//
-//  Created by Roy Marmelstein on 16/01/2016.
-//  Copyright © 2016 Roy Marmelstein. All rights reserved.
-//
-
 import Foundation
 
 extension Zip {
