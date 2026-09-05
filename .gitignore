@@ -6,3 +6,4 @@
 # We don't need to commit them to the repository.
 .build/
 .swiftpm/
+*.xcodeproj/

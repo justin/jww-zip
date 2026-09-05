@@ -335,12 +335,12 @@ public class Zip {
                     let fileAttributes = try fileManager.attributesOfItem(atPath: filePath)
                     if let fileDate = fileAttributes[FileAttributeKey.modificationDate] as? Date {
                         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: fileDate)
-                        zipInfo.tmz_date.tm_sec = UInt32(components.second!)
-                        zipInfo.tmz_date.tm_min = UInt32(components.minute!)
-                        zipInfo.tmz_date.tm_hour = UInt32(components.hour!)
-                        zipInfo.tmz_date.tm_mday = UInt32(components.day!)
-                        zipInfo.tmz_date.tm_mon = UInt32(components.month!) - 1
-                        zipInfo.tmz_date.tm_year = UInt32(components.year!)
+                        zipInfo.tmz_date.tm_sec = Int32(components.second!)
+                        zipInfo.tmz_date.tm_min = Int32(components.minute!)
+                        zipInfo.tmz_date.tm_hour = Int32(components.hour!)
+                        zipInfo.tmz_date.tm_mday = Int32(components.day!)
+                        zipInfo.tmz_date.tm_mon = Int32(components.month!) - 1
+                        zipInfo.tmz_date.tm_year = Int32(components.year!)
                     }
                     if let fileSize = fileAttributes[FileAttributeKey.size] as? Double {
                         currentPosition += fileSize
@@ -436,12 +436,12 @@ public class Zip {
 
             if let modifiedTime = archiveFile.modifiedTime {
                 let calendar = Calendar.current
-                zipInfo.tmz_date.tm_sec = UInt32(calendar.component(.second, from: modifiedTime))
-                zipInfo.tmz_date.tm_min = UInt32(calendar.component(.minute, from: modifiedTime))
-                zipInfo.tmz_date.tm_hour = UInt32(calendar.component(.hour, from: modifiedTime))
-                zipInfo.tmz_date.tm_mday = UInt32(calendar.component(.day, from: modifiedTime))
-                zipInfo.tmz_date.tm_mon = UInt32(calendar.component(.month, from: modifiedTime))
-                zipInfo.tmz_date.tm_year = UInt32(calendar.component(.year, from: modifiedTime))
+                zipInfo.tmz_date.tm_sec = Int32(calendar.component(.second, from: modifiedTime))
+                zipInfo.tmz_date.tm_min = Int32(calendar.component(.minute, from: modifiedTime))
+                zipInfo.tmz_date.tm_hour = Int32(calendar.component(.hour, from: modifiedTime))
+                zipInfo.tmz_date.tm_mday = Int32(calendar.component(.day, from: modifiedTime))
+                zipInfo.tmz_date.tm_mon = Int32(calendar.component(.month, from: modifiedTime))
+                zipInfo.tmz_date.tm_year = Int32(calendar.component(.year, from: modifiedTime))
             }
 
             // Write the data as a file to zip
