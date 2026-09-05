@@ -383,4 +383,27 @@ final class ZipTests {
         })
         #expect(Set(reported) == ["first.txt", "second.txt"])
     }
+
+    @Test("Unzip without overwrite keeps existing files and still extracts the rest")
+    func unzipWithoutOverwritePreservesExistingFiles() throws {
+        let source = try autoRemovingSandbox()
+        let fileA = source.appendingPathComponent("a.txt")
+        let fileB = source.appendingPathComponent("b.txt")
+        try Data("a-original".utf8).write(to: fileA)
+        try Data("b-original".utf8).write(to: fileB)
+        let archiveURL = try autoRemovingSandbox().appendingPathComponent("archive.zip")
+        try Zip.zipFiles(paths: [fileA, fileB], zipFilePath: archiveURL, password: nil, progress: nil)
+
+        // Pre-place a modified a.txt so the archive's a.txt collides with it.
+        let destination = try autoRemovingSandbox()
+        let existingA = destination.appendingPathComponent("a.txt")
+        try Data("a-modified".utf8).write(to: existingA)
+
+        try Zip.unzipFile(archiveURL, destination: destination, overwrite: false, password: nil, progress: nil)
+
+        // The existing file is left untouched, and the following entry is still extracted.
+        #expect(try Data(contentsOf: existingA) == Data("a-modified".utf8))
+        let extractedB = destination.appendingPathComponent("b.txt")
+        #expect(try Data(contentsOf: extractedB) == Data("b-original".utf8))
+    }
 }

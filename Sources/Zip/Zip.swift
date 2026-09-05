@@ -205,8 +205,10 @@ public class Zip {
                 }
             } catch {}
             if fileManager.fileExists(atPath: fullPath) && !isDirectory && !overwrite {
+                // Leave the existing file untouched and move on to the next entry.
                 unzCloseCurrentFile(zip)
                 ret = unzGoToNextFile(zip)
+                continue
             }
 
             var writeBytes: UInt64 = 0
