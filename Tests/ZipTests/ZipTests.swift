@@ -282,4 +282,105 @@ final class ZipTests {
         #expect(Zip.isValidFileExtension("zip"))
         #expect(Zip.isValidFileExtension("cbz"))
     }
+
+    // MARK: Content integrity
+
+    @Test("Zipping then unzipping preserves file contents", arguments: [nil, "secret"] as [String?])
+    func roundTripPreservesContents(password: String?) throws {
+        let source = try autoRemovingSandbox()
+        let textURL = source.appendingPathComponent("text.txt")
+        let binaryURL = source.appendingPathComponent("data.bin")
+        let textData = Data("Hello, Zip round-trip!".utf8)
+        let binaryData = Data((0..<4096).map { UInt8($0 % 251) })
+        try textData.write(to: textURL)
+        try binaryData.write(to: binaryURL)
+
+        let archiveURL = try autoRemovingSandbox().appendingPathComponent("archive.zip")
+        try Zip.zipFiles(paths: [textURL, binaryURL], zipFilePath: archiveURL, password: password, progress: nil)
+
+        let destination = try autoRemovingSandbox()
+        try Zip.unzipFile(archiveURL, destination: destination, overwrite: true, password: password, progress: nil)
+
+        let unzippedText = try Data(contentsOf: destination.appendingPathComponent("text.txt"))
+        let unzippedBinary = try Data(contentsOf: destination.appendingPathComponent("data.bin"))
+        #expect(unzippedText == textData)
+        #expect(unzippedBinary == binaryData)
+    }
+
+    @Test("Every compression level produces a valid archive")
+    func compressionLevelsRoundTrip() throws {
+        let source = try autoRemovingSandbox()
+        let fileURL = source.appendingPathComponent("payload.txt")
+        let payload = Data(String(repeating: "The quick brown fox. ", count: 512).utf8)
+        try payload.write(to: fileURL)
+
+        let levels: [ZipCompression] = [.NoCompression, .BestSpeed, .DefaultCompression, .BestCompression]
+        for level in levels {
+            let archiveURL = try autoRemovingSandbox().appendingPathComponent("archive.zip")
+            try Zip.zipFiles(paths: [fileURL], zipFilePath: archiveURL, password: nil, compression: level, progress: nil)
+            let destination = try autoRemovingSandbox()
+            try Zip.unzipFile(archiveURL, destination: destination, overwrite: true, password: nil, progress: nil)
+            let unzipped = try Data(contentsOf: destination.appendingPathComponent("payload.txt"))
+            #expect(unzipped == payload, "Round-trip failed for compression level \(level)")
+        }
+    }
+
+    @Test("Stronger compression yields a smaller archive")
+    func strongerCompressionYieldsSmallerArchive() throws {
+        let source = try autoRemovingSandbox()
+        let fileURL = source.appendingPathComponent("compressible.txt")
+        try Data(repeating: 0x41, count: 100_000).write(to: fileURL)
+
+        let noneURL = try autoRemovingSandbox().appendingPathComponent("none.zip")
+        let bestURL = try autoRemovingSandbox().appendingPathComponent("best.zip")
+        try Zip.zipFiles(paths: [fileURL], zipFilePath: noneURL, password: nil, compression: .NoCompression, progress: nil)
+        try Zip.zipFiles(paths: [fileURL], zipFilePath: bestURL, password: nil, compression: .BestCompression, progress: nil)
+
+        let fileManager = FileManager.default
+        let noneSize = try #require(fileManager.attributesOfItem(atPath: noneURL.path)[.size] as? Int)
+        let bestSize = try #require(fileManager.attributesOfItem(atPath: bestURL.path)[.size] as? Int)
+        #expect(bestSize < noneSize)
+    }
+
+    // MARK: In-memory archives
+
+    @Test("Zipping in-memory data round-trips")
+    func zipDataRoundTrips() throws {
+        let helloData = Data("in-memory content".utf8)
+        let nestedData = Data("nested file body".utf8)
+        let archiveFiles = [
+            ArchiveFile(filename: "hello.txt", data: helloData as NSData, modifiedTime: Date()),
+            ArchiveFile(filename: "dir/nested.txt", data: nestedData as NSData, modifiedTime: nil)
+        ]
+        let archiveURL = try autoRemovingSandbox().appendingPathComponent("memory.zip")
+        try Zip.zipData(archiveFiles: archiveFiles, zipFilePath: archiveURL, password: nil, progress: nil)
+        #expect(FileManager.default.fileExists(atPath: archiveURL.path))
+
+        let destination = try autoRemovingSandbox()
+        try Zip.unzipFile(archiveURL, destination: destination, overwrite: true, password: nil, progress: nil)
+        let hello = try Data(contentsOf: destination.appendingPathComponent("hello.txt"))
+        let nested = try Data(contentsOf: destination.appendingPathComponent("dir/nested.txt"))
+        #expect(hello == helloData)
+        #expect(nested == nestedData)
+    }
+
+    // MARK: Callbacks
+
+    @Test("Unzip reports each extracted file to the output handler")
+    func unzipReportsFileOutputHandler() throws {
+        let source = try autoRemovingSandbox()
+        let firstURL = source.appendingPathComponent("first.txt")
+        let secondURL = source.appendingPathComponent("second.txt")
+        try Data("first".utf8).write(to: firstURL)
+        try Data("second".utf8).write(to: secondURL)
+        let archiveURL = try autoRemovingSandbox().appendingPathComponent("handler.zip")
+        try Zip.zipFiles(paths: [firstURL, secondURL], zipFilePath: archiveURL, password: nil, progress: nil)
+
+        let destination = try autoRemovingSandbox()
+        var reported: [String] = []
+        try Zip.unzipFile(archiveURL, destination: destination, overwrite: true, password: nil, progress: nil, fileOutputHandler: { url in
+            reported.append(url.lastPathComponent)
+        })
+        #expect(Set(reported) == ["first.txt", "second.txt"])
+    }
 }
